@@ -1,24 +1,27 @@
+import os
 import mysql.connector
-from mysql.connector import Error
+from flask import jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Establishing MySQL connection
 def get_db_connection():
     try:
         conn = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="StrongPassword123",
-            database="sentiment_app"
+            host=os.environ.get('DB_HOST'),
+            user=os.environ.get('DB_USER'),
+            password=os.environ.get('DB_PASSWORD'),
+            database=os.environ.get('DB_NAME')
         )
         return conn
-    except Error as e:
-        print("Error while connecting to MySQL:", e)
+    except mysql.connector.Error as err:
+        print(f"[DB ERROR] Failed to connect to database: {err}")
         return None
 
 # Create new user with hashed password
 def create_user(username, password):
     conn = get_db_connection()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'}), 500
     cursor = conn.cursor()
     hashed_password = generate_password_hash(password)
     cursor.execute(
@@ -32,6 +35,8 @@ def create_user(username, password):
 # Authenticate user by comparing hashed password
 def authenticate_user(username, password):
     conn = get_db_connection()
+    if not conn:    
+        return jsonify({'error': 'Database connection failed'}), 500
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT password FROM users WHERE username = %s", (username,))
     user = cursor.fetchone()

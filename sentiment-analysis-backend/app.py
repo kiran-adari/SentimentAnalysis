@@ -4,9 +4,11 @@ import mysql.connector
 from transformers import pipeline
 from werkzeug.security import generate_password_hash, check_password_hash
 from db import get_db_connection, authenticate_user
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins="*", supports_credentials=True)
 sentiment_pipeline = pipeline("sentiment-analysis")
 
 @app.route('/')
